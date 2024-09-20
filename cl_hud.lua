@@ -13,12 +13,6 @@ RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(playerData)
     isPlayerLoaded = true
     TriggerEvent('es:setMoneyDisplay', 0.0)
-
-    if ESX.UI and ESX.UI.HUD then
-        ESX.UI.HUD.SetDisplay(0.0)
-    else
-        print("Erreur : ESX.UI ou ESX.UI.HUD est nil")
-    end
     
     xPlayer = playerData
 
