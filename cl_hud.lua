@@ -5,7 +5,6 @@ local screenRes = {
     y = nil
 }
 
--- talking
 local prox = 0.0
 local isTalking = false
 
@@ -17,7 +16,6 @@ AddEventHandler('esx:playerLoaded', function(playerData)
     xPlayer = playerData
 
     prox = Config.proximity.whisper
-    NetworkSetTalkerProximity(prox)
 end)
 
 Citizen.CreateThread(function()
@@ -35,7 +33,7 @@ end)
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(250)
-        if NetworkIsPlayerTalking(PlayerId()) then 
+        if MumbleIsPlayerTalking(PlayerId()) == 1 then 
             isTalking = true
         else
             isTalking = false
@@ -53,18 +51,41 @@ Citizen.CreateThread(function()
         Citizen.Wait(7)
         if Config.allowProximityChange then 
             if IsControlJustPressed(1, 243) then
-                if prox <= Config.proximity.whisper then
-                    prox = Config.proximity.normal
-                    vprox = "normal"
-                elseif prox == Config.proximity.normal then
-                    prox = Config.proximity.shout
-                    vprox = "shout"
-                elseif prox >= Config.proximity.shout then
-                    prox = Config.proximity.whisper
-                    vprox = "whisper"
+                ExecuteCommand('cycleproximity')
+            end
+        end
+    end
+end)
+
+Citizen.CreateThread(function()
+    local lastIndex = nil
+    local lastModeLabel = nil
+    while true do
+        Citizen.Wait(200)
+        if LocalPlayer and LocalPlayer.state and LocalPlayer.state.proximity then
+            local proxState = LocalPlayer.state.proximity
+            local index = proxState.index
+            local modeLabel = nil
+            if index == 1 then
+                modeLabel = "whisper"
+            elseif index == 2 then
+                modeLabel = "normal"
+            elseif index == 3 then
+                modeLabel = "shout"
+            else
+                local dist = proxState.distance or 0.0
+                if dist <= 3.0 then
+                    modeLabel = "whisper"
+                elseif dist <= 10.0 then
+                    modeLabel = "normal"
+                else
+                    modeLabel = "shout"
                 end
-                NetworkSetTalkerProximity(prox)
-                SendNUIMessage({action = "setProximity", value = vprox})
+            end
+            if index ~= lastIndex or modeLabel ~= lastModeLabel then
+                SendNUIMessage({action = "setProximity", value = modeLabel})
+                lastIndex = index
+                lastModeLabel = modeLabel
             end
         end
     end
